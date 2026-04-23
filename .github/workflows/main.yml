@@ -1,0 +1,173 @@
+name: 🏗️ Build Yalla Goal TV Pro APK
+
+on:
+  push:
+    branches: [main, master]
+  workflow_dispatch:
+
+jobs:
+  build-apk:
+    name: Build Android APK
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: ⬇️ Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: 🟢 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: ☕ Setup Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: "temurin"
+          java-version: "21"
+
+      - name: 🤖 Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: 📦 Install Android Build Tools
+        run: |
+          sdkmanager --sdk_root=$ANDROID_SDK_ROOT \
+            "build-tools;34.0.0" \
+            "platforms;android-34"
+
+      - name: 🖼️ Install ImageMagick
+        run: sudo apt-get install -y imagemagick
+
+      # الخطوة 1 — تجهيز ملفات الويب بناءً على الملف المرسل
+      - name: 🗂️ Create Project & www
+        run: |
+          mkdir -p yalla-goal/www
+          # نسخ ملف index.html المرفق
+          if [ -f "index.html" ]; then
+            cp index.html yalla-goal/www/index.html
+          else
+            echo "❌ index.html not found!" && exit 1
+          fi
+
+          cat > yalla-goal/package.json << 'EOF'
+          {
+            "name": "yalla-goal-pro",
+            "version": "1.0.0",
+            "private": true,
+            "dependencies": {
+              "@capacitor/android": "^6.0.0",
+              "@capacitor/cli": "^6.0.0",
+              "@capacitor/core": "^6.0.0"
+            }
+          }
+          EOF
+
+      - name: 📥 Install Dependencies
+        run: |
+          cd yalla-goal
+          npm install
+
+      - name: ⚙️ Capacitor Config (CORS & TV Support)
+        run: |
+          cat > yalla-goal/capacitor.config.json << 'EOF'
+          {
+            "appId": "com.yallagoal.pro",
+            "appName": "يلا گـــول TV Pro",
+            "webDir": "www",
+            "server": {
+              "androidScheme": "https",
+              "cleartext": true,
+              "allowNavigation": ["*"]
+            },
+            "android": {
+              "allowMixedContent": true,
+              "webContentsDebuggingEnabled": false
+            }
+          }
+          EOF
+
+      - name: 🤖 Add Android Platform
+        run: |
+          cd yalla-goal
+          npx cap add android
+
+      # الخطوة 2 — مزامنة الملفات وحل تضارب المكتبات
+      - name: 🔄 Capacitor Sync & Dependency Fix
+        run: |
+          cd yalla-goal
+          npx cap sync android
+          
+          # حل تضارب مكتبات Kotlin لضمان استقرار البناء
+          GRADLE_APP="android/app/build.gradle"
+          cat >> "$GRADLE_APP" << 'EOF'
+          configurations.all {
+              exclude group: 'org.jetbrains.kotlin', module: 'kotlin-stdlib-jdk7'
+              exclude group: 'org.jetbrains.kotlin', module: 'kotlin-stdlib-jdk8'
+              resolutionStrategy {
+                  force "org.jetbrains.kotlin:kotlin-stdlib:1.9.0"
+              }
+          }
+          EOF
+
+      # الخطوة 3 — إعدادات الشبكة والصلاحيات (AndroidManifest)
+      - name: 📡 Network & Permissions Config
+        run: |
+          mkdir -p yalla-goal/android/app/src/main/res/xml
+          cat > yalla-goal/android/app/src/main/res/xml/network_security_config.xml << 'EOF'
+          <?xml version="1.0" encoding="utf-8"?>
+          <network-security-config>
+              <base-config cleartextTrafficPermitted="true">
+                  <trust-anchors>
+                      <certificates src="system" />
+                  </trust-anchors>
+              </base-config>
+          </network-security-config>
+          EOF
+
+          cat > yalla-goal/android/app/src/main/res/values/strings.xml << 'EOF'
+          <?xml version='1.0' encoding='utf-8'?>
+          <resources>
+              <string name="app_name">يلا گـــول TV Pro</string>
+              <string name="title_activity_main">يلا گـــول TV Pro</string>
+              <string name="package_name">com.yallagoal.pro</string>
+              <string name="custom_url_scheme">com.yallagoal.pro</string>
+          </resources>
+          EOF
+
+      # الخطوة 4 — توليد الأيقونات باستخدام اللون الأسود المفضل لديك #000000
+      - name: 🖼️ Generate App Icons
+        run: |
+          # استخدام شعار التطبيق (يمكنك تغيير الرابط لاحقاً)
+          curl -L "https://i.ibb.co/CKJ5NVv7/Screenshot-2026-04-21-1-52-19-PM.png" -o /tmp/icon.png
+          
+          BASE="yalla-goal/android/app/src/main/res"
+          declare -A SIZES=( ["mdpi"]=48 ["hdpi"]=72 ["xhdpi"]=96 ["xxhdpi"]=144 ["xxxhdpi"]=192 )
+          
+          for SUFFIX in "${!SIZES[@]}"; do
+            SIZE=${SIZES[$SUFFIX]}
+            DIR_MIPMAP="$BASE/mipmap-$SUFFIX"
+            mkdir -p "$DIR_MIPMAP"
+
+            # إنشاء الأيقونات (الخلفية سوداء بالكامل كما تفضل #000000)
+            convert /tmp/icon.png -resize ${SIZE}x${SIZE}^ -gravity center -extent ${SIZE}x${SIZE} "$DIR_MIPMAP/ic_launcher.png"
+            convert /tmp/icon.png -resize ${SIZE}x${SIZE}^ -gravity center -extent ${SIZE}x${SIZE} "$DIR_MIPMAP/ic_launcher_round.png"
+            convert -size ${SIZE}x${SIZE} xc:#000000 "$DIR_MIPMAP/ic_launcher_background.png"
+            convert /tmp/icon.png -resize ${SIZE}x${SIZE} -gravity center -background none -extent ${SIZE}x${SIZE} "$DIR_MIPMAP/ic_launcher_foreground.png"
+          done
+
+          # إزالة ملفات XML الافتراضية لفرض استخدام الصور المنشأة
+          find "$BASE" -name "ic_launcher.xml" -delete
+          find "$BASE" -name "ic_launcher_round.xml" -delete
+
+      - name: 🔐 Grant Gradle Permission
+        run: chmod +x yalla-goal/android/gradlew
+
+      - name: 🏗️ Build Final APK
+        run: |
+          cd yalla-goal/android
+          ./gradlew assembleDebug
+
+      - name: 📤 Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: YallaGoal-TV-Pro
+          path: yalla-goal/android/app/build/outputs/apk/debug/app-debug.apk
