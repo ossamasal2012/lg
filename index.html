@@ -2,405 +2,668 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>يلا گـــول TV Pro</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>OSS IPTV</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
-    <link rel="stylesheet" href="https://cdn.plyr.io/3.7.8/plyr.css">
-    <script src="https://cdn.plyr.io/3.7.8/plyr.polyfilled.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/hls.js/1.4.12/hls.min.js"></script>
 
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;900&display=swap');
-
-        :root {
-            --tv-focus-color: #10b981;
-            --tv-bg-dark: #020617;
-        }
+        @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap');
 
         body {
             font-family: 'Tajawal', sans-serif;
-            background-color: var(--tv-bg-dark);
+            background-color: #020617;
             color: #f1f5f9;
             height: 100vh;
-            margin: 0;
             overflow: hidden;
+            margin: 0;
             user-select: none;
         }
 
-        .tv-grid {
-            display: grid;
-            grid-template-columns: 380px 1fr;
-            height: 100vh;
-            transition: all 0.5s ease;
+        #auth-screen {
+            position: fixed; inset: 0; background: #020617; z-index: 99999;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
         }
 
-        /* نظام التركيز المحسن */
-        .focusable {
-            outline: none;
-            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        .tv-focus {
+            transform: scale(1.03);
+            border-color: #10b981 !important;
+            background: linear-gradient(270deg, rgba(16, 185, 129, 0.4) 0%, rgba(15, 23, 42, 0.9) 100%) !important;
+            box-shadow: 0 0 15px rgba(16, 185, 129, 0.6);
+            z-index: 10;
+        }
+        
+        .tv-focus-search {
+            border-color: #10b981 !important;
+            box-shadow: 0 0 10px rgba(16, 185, 129, 0.5);
+            background-color: #0f172a !important;
+        }
+
+        .tv-focus-iframe-btn {
+            background-color: #ef4444 !important;
+            border-color: #f87171 !important;
+            box-shadow: 0 0 20px rgba(239, 68, 68, 0.6);
+            transform: scale(1.05);
+        }
+
+        .channel-item, .category-btn {
+            transition: all 0.2s ease;
             border: 2px solid transparent;
         }
 
-        .focusable:focus, .focusable.tv-focused {
-            background: linear-gradient(90deg, rgba(16, 185, 129, 0.4), rgba(16, 185, 129, 0.15)) !important;
-            border-color: var(--tv-focus-color) !important;
-            transform: scale(1.02);
-            box-shadow: 0 0 25px rgba(16, 185, 129, 0.3);
-            z-index: 20;
-        }
-
-        input.focusable:focus {
-            background: #1e293b !important;
-            border-color: white !important;
-        }
-
-        /* إخفاء القائمة في وضع المشغل */
-        .player-active .tv-sidebar {
-            margin-right: -380px;
-            opacity: 0;
-        }
-        .player-active .tv-grid {
-            grid-template-columns: 0px 1fr;
-        }
-
-        /* شريط جانبي انسيابي */
-        .tv-sidebar {
-            background: #0f172a;
-            border-left: 1px solid rgba(255,255,255,0.05);
-            display: flex;
-            flex-direction: column;
-            z-index: 100;
-        }
-
         .no-scrollbar::-webkit-scrollbar { display: none; }
-        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
-        /* منطقة الفيديو */
-        #mainPlayerArea {
-            background: #000;
-            position: relative;
+        /* نافذة الخيارات المنبثقة */
+        #action-modal {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 9000;
+            display: none; align-items: center; justify-content: center;
+        }
+        #action-modal.active { display: flex; }
+        .modal-content {
+            background: #0f172a; border: 2px solid #1e293b; padding: 30px;
+            border-radius: 24px; width: 90%; max-width: 400px; text-align: center;
+        }
+        .modal-btn {
+            width: 100%; padding: 15px; margin: 8px 0; border-radius: 12px;
+            font-weight: bold; font-size: 1.1rem; transition: all 0.2s;
+            background: #1e293b; border: 2px solid transparent;
+        }
+        .modal-btn.tv-focus { background: #10b981; color: #fff; border-color: #34d399; }
+
+        /* --- المشغل المخصص --- */
+        #player-container {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background-color: #000; z-index: 9999; display: none; flex-direction: column;
+        }
+        #player-container.active { display: flex; }
+        video { width: 100%; height: 100%; position: absolute; transition: all 0.3s ease; }
+        .video-fit { object-fit: contain; }
+        .video-fill { object-fit: fill; }
+        .video-zoom { object-fit: cover; }
+
+        .player-overlay {
+            position: absolute; inset: 0;
+            background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.4) 50%, rgba(0,0,0,0.2) 100%);
+            display: none; flex-direction: column; justify-content: flex-end; padding-bottom: 60px; z-index: 50;
+        }
+        .player-overlay.active { display: flex; }
+
+        .control-item {
+            padding: 12px 20px; margin: 5px; border-radius: 12px;
+            background: rgba(255, 255, 255, 0.1); transition: all 0.2s ease-in-out;
+            border: 3px solid transparent; text-align: center; min-width: 120px;
+            font-size: 1.1rem; display: flex; align-items: center; justify-content: center; gap: 8px;
         }
 
-        /* أزرار التحكم في الفيديو للريموت */
-        .player-overlay-controls {
-            position: absolute;
-            bottom: 40px;
-            left: 50%;
-            transform: translateX(-50%);
-            display: flex;
-            gap: 15px;
-            opacity: 0;
-            transition: opacity 0.3s;
-            z-index: 200;
+        .control-item.tv-focus {
+            background: #ffffff !important; color: #000 !important; border-color: #3b82f6 !important;
+            transform: scale(1.05); box-shadow: 0 0 20px rgba(59, 130, 246, 0.5);
         }
-        .player-active:hover .player-overlay-controls,
-        .show-ui .player-overlay-controls { opacity: 1; }
 
-        .back-btn-tv {
-            position: absolute;
-            top: 30px;
-            right: 30px;
-            z-index: 210;
-            background: rgba(0,0,0,0.6);
-            padding: 12px 24px;
-            border-radius: 12px;
-            border: 1px solid rgba(255,255,255,0.2);
-            display: none;
+        .settings-menu {
+            position: absolute; bottom: 180px; right: 50px; background: #111827;
+            border-radius: 15px; padding: 10px; display: none; flex-direction: column;
+            min-width: 220px; border: 2px solid #374151; box-shadow: 0 10px 25px rgba(0,0,0,0.5); z-index: 60;
         }
-        .player-active .back-btn-tv { display: flex; }
-
-        .video-fit-contain { object-fit: contain; width: 100%; height: 100%; }
-
-        .status-badge {
-            background: rgba(16, 185, 129, 0.1);
-            color: #10b981;
-            padding: 2px 8px;
-            border-radius: 4px;
-            font-size: 10px;
-            font-weight: bold;
+        .settings-menu.active { display: flex; }
+        
+        .menu-option {
+            padding: 12px 20px; margin: 4px 0; border-radius: 8px; text-align: right; transition: background 0.2s;
         }
+        .menu-option.tv-focus { background: #3b82f6 !important; color: #fff !important; }
+
+        #statusInfo {
+            position: absolute; top: 20px; right: 20px; background: rgba(0,0,0,0.7);
+            padding: 8px 20px; border-radius: 20px; font-size: 1.1rem; z-index: 60;
+            pointer-events: none; opacity: 0; transition: opacity 0.5s; font-weight: bold;
+        }
+        #statusInfo.show { opacity: 1; }
+
+        .loader-screen {
+            position: absolute; inset: 0; display: flex; flex-direction: column;
+            align-items: center; justify-content: center; background: #020617; z-index: 40;
+        }
+
+        #iframe-container {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background-color: #000; z-index: 10000; display: none; flex-direction: column;
+        }
+        #iPlayer { width: 100%; height: 100%; border: none; flex-grow: 1; background: #000; }
+        #iframe-top-bar { position: absolute; top: 20px; left: 20px; z-index: 10010; }
+        .iframe-back-btn {
+            background-color: rgba(153, 27, 27, 0.8); color: white; border: 2px solid rgba(248, 113, 113, 0.5);
+            padding: 10px 25px; border-radius: 12px; font-weight: bold; font-size: 1.2rem;
+            display: flex; align-items: center; gap: 10px; transition: all 0.2s;
+        }
+
     </style>
 </head>
-<body class="tv-grid" id="tvBody">
+<body>
 
-    <!-- القائمة الجانبية -->
-    <aside class="tv-sidebar">
-        <div class="p-6">
-            <div class="flex items-center justify-between mb-4">
-                <h1 class="text-2xl font-black text-emerald-500">يلا گـــول TV</h1>
-                <span class="status-badge">LIVE</span>
+    <!-- شاشة تسجيل الدخول -->
+    <div id="auth-screen">
+        <div class="text-center mb-8">
+            <h1 class="text-4xl font-black text-emerald-500 mb-2"> OSS IPTV </h1>
+            <p class="text-slate-400">يرجى إدخال الرمز السري للتفعيل</p>
+        </div>
+        <div class="w-full max-w-md px-6">
+            <input type="password" id="authInput" placeholder="أدخل الرمز هنا..." 
+                class="w-full bg-slate-900 border-2 border-slate-800 rounded-2xl py-5 px-6 text-2xl text-center focus:outline-none text-emerald-400 placeholder:text-slate-700 tracking-widest mb-6 transition-all">
+            <button id="authBtn" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-4 rounded-2xl text-xl shadow-lg shadow-emerald-900/20 transition-all border-b-4 border-emerald-800">تفعيل التطبيق</button>
+            <p id="authError" class="text-red-500 text-center mt-4 font-bold hidden">الرمز السري غير صحيح!</p>
+        </div>
+    </div>
+
+    <!-- النافذة المنبثقة للخيارات -->
+    <div id="action-modal">
+        <div class="modal-content">
+            <h2 id="modal-title" class="text-xl font-bold text-white mb-6">قناة بي ان سبورت</h2>
+            <button id="m-play" class="modal-btn tv-focus">▶️ تشغيل القناة</button>
+            <button id="m-fav" class="modal-btn">⭐ إضافة للمفضلة</button>
+            <button id="m-cancel" class="modal-btn !text-red-400">❌ إلغاء</button>
+        </div>
+    </div>
+
+    <!-- الواجهة الرئيسية -->
+    <div id="main-app" class="flex flex-col h-full w-full hidden">
+        <aside class="w-full h-full flex flex-col bg-slate-950 border-l border-slate-900 z-50">
+            <div class="p-4 border-b border-slate-900 text-center shrink-0">
+                <h1 class="text-2xl font-black text-emerald-500 tracking-tight"> OSS IPTV</h1>
+                <p class="text-[10px] text-slate-500 font-bold uppercase tracking-widest mt-1">نسخة التلفاز الذكي الشاملة</p>
             </div>
-            
-            <!-- حقل البحث -->
-            <div class="relative group">
-                <i class="fa-solid fa-search absolute right-4 top-1/2 -translate-y-1/2 text-slate-500"></i>
-                <input type="text" id="searchInput" placeholder="ابحث عن قناة..." 
-                    class="focusable w-full bg-slate-900 border-0 rounded-xl py-3 pr-12 pl-4 text-sm text-slate-200 outline-none">
+
+            <div class="p-4 border-b border-slate-900 shrink-0">
+                <div class="relative">
+                    <i class="fa-solid fa-magnifying-glass absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 text-sm"></i>
+                    <input type="text" id="searchInput" placeholder="ابحث عن قناة (اضغط OK للكتابة)" 
+                        class="w-full bg-slate-900 border-2 border-slate-800 rounded-xl py-3 px-4 pr-10 text-sm focus:outline-none text-white placeholder:text-slate-500 transition-all">
+                </div>
+            </div>
+
+            <div id="categoryMenu" class="p-4 overflow-x-auto no-scrollbar flex gap-2 shrink-0 border-b border-slate-900 bg-slate-900/50"></div>
+
+            <div id="channelsBox" class="flex-1 overflow-y-auto p-4 space-y-2 no-scrollbar relative">
+                <div id="app-loader" class="absolute inset-0 flex flex-col items-center justify-center">
+                    <div class="w-12 h-12 rounded-full border-4 border-slate-800 border-t-emerald-500 animate-spin"></div>
+                    <span class="mt-4 text-sm font-bold text-slate-500">جاري تحميل القنوات...</span>
+                </div>
+            </div>
+        </aside>
+    </div>
+
+    <!-- شاشة الـ Iframe المخصصة -->
+    <div id="iframe-container">
+        <div id="iframe-top-bar">
+            <div id="iframe-back" class="iframe-back-btn tv-focus-iframe-btn">
+                <i class="fa-solid fa-arrow-right-from-bracket"></i> 🔙 رجوع للقنوات
             </div>
         </div>
+        <iframe id="iPlayer" allowfullscreen sandbox="allow-scripts allow-same-origin allow-forms" referrerpolicy="no-referrer"></iframe>
+    </div>
 
-        <!-- التصنيفات -->
-        <div id="categoryMenu" class="px-4 pb-4 flex gap-2 overflow-x-auto no-scrollbar shrink-0">
-            <!-- سيتم توليده -->
+    <!-- المشغل المخصص -->
+    <div id="player-container">
+        <video id="video" class="video-fit" preload="auto"></video>
+        <div id="statusInfo"></div>
+
+        <div id="player-loader" class="loader-screen hidden">
+            <div class="w-12 h-12 rounded-full border-4 border-slate-800 border-t-blue-500 animate-spin"></div>
+            <span class="mt-4 text-sm font-bold text-slate-400" id="player-loading-text">جاري تشغيل القناة...</span>
         </div>
 
-        <!-- القنوات -->
-        <div id="channelsBox" class="flex-1 overflow-y-auto px-4 pb-6 space-y-2 no-scrollbar">
-            <!-- سيتم توليده -->
+        <div id="controlsOverlay" class="player-overlay">
+            <div class="flex flex-wrap justify-center items-center px-4 gap-2">
+                <div id="btn-play" class="control-item player-btn" data-type="action"><span id="play-icon">⏸ ايقاف</span></div>
+                <div id="btn-mute" class="control-item player-btn" data-type="action"><span id="mute-status">🔊 كتم</span></div>
+                <div id="btn-quality" class="control-item player-btn" data-type="action">⚙️ <span id="current-quality">تلقائي</span></div>
+                <div id="btn-aspect" class="control-item player-btn" data-type="action">🖼️ <span id="aspect-text">Fit</span></div>
+                <div id="btn-hide" class="control-item player-btn bg-slate-800/80" data-type="action">🙈 إخفاء</div>
+                <div id="btn-exit" class="control-item player-btn !bg-red-900/50 !border-red-500/50" data-type="action">🔙 رجوع</div>
+            </div>
+            <div id="qualityMenu" class="settings-menu">
+                <div class="menu-option quality-btn tv-focus" data-quality="-1">تلقائي (Auto)</div>
+            </div>
         </div>
-    </aside>
-
-    <!-- منطقة المشغل -->
-    <main id="mainPlayerArea">
-        <!-- زر العودة اليدوي (للأهمية) -->
-        <button onclick="TV.exitPlayer()" class="focusable back-btn-tv items-center gap-3 text-white font-bold">
-            <i class="fa-solid fa-arrow-right"></i>
-            <span>الرجوع للقائمة</span>
-        </button>
-
-        <div id="statusScreen" class="absolute inset-0 flex flex-col items-center justify-center z-10 bg-slate-950">
-            <div class="w-12 h-12 border-4 border-slate-800 border-t-emerald-500 rounded-full animate-spin mb-4"></div>
-            <p class="text-slate-500 font-bold">اختر قناة لبدء البث</p>
-        </div>
-
-        <div id="playerContainer" class="w-full h-full"></div>
-        <iframe id="iPlayer" class="w-full h-full border-0 hidden" allowfullscreen></iframe>
-
-        <!-- التحكم بالمشغل عبر الريموت -->
-        <div class="player-overlay-controls">
-            <button onclick="TV.exitPlayer()" class="focusable bg-red-600 p-4 rounded-full w-16 h-16 flex items-center justify-center">
-                <i class="fa-solid fa-xmark text-xl text-white"></i>
-            </button>
-            <button onclick="togglePlay()" class="focusable bg-slate-800 p-4 rounded-full w-16 h-16 flex items-center justify-center">
-                <i class="fa-solid fa-pause text-xl text-white" id="playIcon"></i>
-            </button>
-        </div>
-    </main>
+    </div>
 
     <script>
-        /** * محرك التحكم بالريموت (TV Engine) 
-         */
-        const TV = {
-            currentSection: 'search', 
-            
-            init() {
-                window.addEventListener('keydown', (e) => this.onKeyDown(e));
-                document.getElementById('searchInput').addEventListener('input', () => renderChannels());
-                
-                // تعريف المفاتيح
-                this.KEYS = {
-                    UP: 38, DOWN: 40, LEFT: 37, RIGHT: 39, ENTER: 13,
-                    BACK: 461, BACK_ALT: 10009, ESC: 27, BACKSPACE: 8
-                };
-            },
-
-            onKeyDown(e) {
-                const key = e.keyCode;
-
-                // إذا كان المستخدم يكتب في البحث، لا نريد اعتراض مفاتيح الكتابة
-                if (document.activeElement.id === 'searchInput' && key !== this.KEYS.DOWN && key !== this.KEYS.ENTER) {
-                    return;
-                }
-
-                if ([37, 38, 39, 40].includes(key)) e.preventDefault();
-
-                switch(key) {
-                    case this.KEYS.UP: this.move('UP'); break;
-                    case this.KEYS.DOWN: this.move('DOWN'); break;
-                    case this.KEYS.LEFT: this.move('LEFT'); break;
-                    case this.KEYS.RIGHT: this.move('RIGHT'); break;
-                    case this.KEYS.ENTER: this.click(); break;
-                    case this.KEYS.BACK:
-                    case this.KEYS.BACK_ALT:
-                    case this.KEYS.ESC:
-                        if (document.body.classList.contains('player-active')) {
-                            this.exitPlayer();
-                            e.preventDefault();
-                        }
-                        break;
-                }
-            },
-
-            refreshFocusable() {
-                this.items = {
-                    search: [document.getElementById('searchInput')],
-                    categories: Array.from(document.querySelectorAll('#categoryMenu .focusable')),
-                    channels: Array.from(document.querySelectorAll('#channelsBox .focusable')),
-                    player: Array.from(document.querySelectorAll('#mainPlayerArea .focusable'))
-                };
-            },
-
-            move(dir) {
-                this.refreshFocusable();
-                let current = document.activeElement;
-                
-                if (this.currentSection === 'search') {
-                    if (dir === 'DOWN') { this.setSection('categories', 0); }
-                } 
-                else if (this.currentSection === 'categories') {
-                    let idx = this.items.categories.indexOf(current);
-                    if (dir === 'DOWN') this.setSection('channels', 0);
-                    else if (dir === 'UP') this.setSection('search', 0);
-                    else if (dir === 'LEFT' && idx < this.items.categories.length - 1) this.items.categories[idx+1].focus();
-                    else if (dir === 'RIGHT' && idx > 0) this.items.categories[idx-1].focus();
-                }
-                else if (this.currentSection === 'channels') {
-                    let idx = this.items.channels.indexOf(current);
-                    if (dir === 'UP') {
-                        if (idx === 0) this.setSection('categories', 0);
-                        else this.items.channels[idx-1].focus();
-                    } else if (dir === 'DOWN' && idx < this.items.channels.length - 1) {
-                        this.items.channels[idx+1].focus();
-                    }
-                }
-                else if (this.currentSection === 'player') {
-                    let idx = this.items.player.indexOf(current);
-                    if (dir === 'LEFT' && idx < this.items.player.length - 1) this.items.player[idx+1].focus();
-                    else if (dir === 'RIGHT' && idx > 0) this.items.player[idx-1].focus();
-                }
-
-                if (document.activeElement) {
-                    document.activeElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                }
-            },
-
-            setSection(section, index) {
-                this.currentSection = section;
-                this.refreshFocusable();
-                if (this.items[section][index]) {
-                    this.items[section][index].focus();
-                }
-            },
-
-            click() {
-                if (document.activeElement) document.activeElement.click();
-            },
-
-            exitPlayer() {
-                document.body.classList.remove('player-active');
-                if (plyr) plyr.pause();
-                const iframe = document.getElementById('iPlayer');
-                iframe.src = "";
-                iframe.classList.add('hidden');
-                document.getElementById('statusScreen').classList.remove('hidden');
-                this.setSection('channels', 0);
-            }
+        let myChannels = [];
+        let filteredChannels = [];
+        let favorites = JSON.parse(localStorage.getItem('yalla_favs')) || [];
+        let hls = null;
+        let currentCat = "الكل";
+        let searchQuery = "";
+        let currentMode = 'AUTH'; 
+        let selectedChannel = null;
+        
+        const SECRET_CODE = "ossamatt22";
+        
+        let focusIndices = {
+            auth: 0,
+            channels: 0,
+            categories: 0,
+            controls: 0,
+            menu: 0,
+            modal: 0
         };
 
-        /** * إدارة البيانات والمشغل 
-         */
-        let allChannels = [];
-        let currentCat = "الكل";
-        let hls = null;
-        let plyr = null;
+        const authScreen = document.getElementById('auth-screen');
+        const authInput = document.getElementById('authInput');
+        const authBtn = document.getElementById('authBtn');
+        const authError = document.getElementById('authError');
+        const mainApp = document.getElementById('main-app');
+        const actionModal = document.getElementById('action-modal');
 
-        async function initApp() {
-            try {
-                const res = await fetch("https://raw.githubusercontent.com/ossamasal2012/yalla-data/main/channels.json");
-                allChannels = await res.json();
-                renderCategories();
-                renderChannels();
-                TV.init();
-                // فوكس افتراضي على البحث
-                TV.setSection('search', 0);
-            } catch (err) { console.error(err); }
+        const searchInput = document.getElementById('searchInput');
+        const video = document.getElementById('video');
+        const playerContainer = document.getElementById('player-container');
+        const iframeContainer = document.getElementById('iframe-container');
+        const iPlayer = document.getElementById('iPlayer');
+        const controlsOverlay = document.getElementById('controlsOverlay');
+        const qualityMenu = document.getElementById('qualityMenu');
+        const statusInfo = document.getElementById('statusInfo');
+        const playerLoader = document.getElementById('player-loader');
+        
+        const aspectModes = ['fit', 'fill', 'zoom'];
+        const aspectLabels = ['Fit', 'Fill', 'Zoom'];
+        let currentAspectIndex = 0;
+
+        function checkAuth() {
+            if (localStorage.getItem('yalla_goal_auth') === 'true') proceedToApp();
+            else { currentMode = 'AUTH'; updateFocus(); }
         }
 
-        function renderCategories() {
-            const menu = document.getElementById('categoryMenu');
-            const cats = ["الكل", ...new Set(allChannels.map(c => c[2]))];
-            menu.innerHTML = cats.map(cat => `
-                <button onclick="setCategory('${cat}')" class="focusable px-6 py-2 rounded-xl text-sm font-bold bg-slate-900 text-slate-400 whitespace-nowrap">
-                    ${cat}
+        function handleAuth() {
+            if (authInput.value === SECRET_CODE) {
+                localStorage.setItem('yalla_goal_auth', 'true');
+                proceedToApp();
+            } else {
+                authError.classList.remove('hidden');
+                authInput.value = "";
+                setTimeout(() => authError.classList.add('hidden'), 3000);
+            }
+        }
+
+        function proceedToApp() {
+            authScreen.style.display = 'none';
+            mainApp.classList.remove('hidden');
+            currentMode = 'CHANNELS';
+            loadChannels();
+        }
+
+        async function loadChannels() {
+            try {
+                const res = await fetch("https://raw.githubusercontent.com/ossamasal2012/yalla-data/main/channels.json");
+                myChannels = await res.json();
+                document.getElementById('app-loader').style.display = 'none';
+                renderMenu();
+                filterChannels();
+            } catch (err) {
+                console.error("Error", err);
+                document.getElementById('app-loader').innerHTML = '<span class="text-red-500 font-bold">خطأ في الاتصال</span>';
+            }
+        }
+
+        function renderMenu() {
+            const cats = ["المفضلة", "الكل", ...new Set(myChannels.map(c => c[2]))];
+            const menuHtml = cats.map((c, index) => `
+                <button id="cat-${index}" class="category-btn px-4 py-2 rounded-lg text-sm font-bold transition-all border border-slate-800 bg-slate-900 text-slate-400 whitespace-nowrap" data-cat="${c}">
+                    ${c === "المفضلة" ? '⭐ المفضلة' : c}
                 </button>
             `).join('');
+            document.getElementById('categoryMenu').innerHTML = menuHtml;
+        }
+
+        function filterChannels() {
+            if (currentCat === "المفضلة") {
+                filteredChannels = myChannels.filter(c => favorites.includes(c[0]) && c[0].toLowerCase().includes(searchQuery.toLowerCase()));
+            } else {
+                filteredChannels = myChannels.filter(c => {
+                    const matchCat = currentCat === "الكل" || c[2] === currentCat;
+                    const matchSearch = c[0].toLowerCase().includes(searchQuery.toLowerCase());
+                    return matchCat && matchSearch;
+                });
+            }
+            renderChannels();
         }
 
         function renderChannels() {
             const box = document.getElementById('channelsBox');
-            const query = document.getElementById('searchInput').value.toLowerCase();
-            
-            const filtered = allChannels.filter(c => {
-                const matchCat = currentCat === "الكل" || c[2] === currentCat;
-                const matchSearch = c[0].toLowerCase().includes(query);
-                return matchCat && matchSearch;
-            });
-
-            box.innerHTML = filtered.map(ch => `
-                <div tabindex="0" onclick="playChannel('${ch[1]}', '${ch[3]}', '${ch[0]}')" 
-                    class="focusable p-4 flex items-center justify-between bg-slate-900/40 rounded-xl">
-                    <div class="flex items-center gap-4">
-                        <div class="w-10 h-10 rounded-lg bg-emerald-500/20 flex items-center justify-center">
-                            <i class="fa-solid fa-play text-emerald-500"></i>
-                        </div>
-                        <span class="font-bold text-slate-200">${ch[0]}</span>
+            if(filteredChannels.length === 0) {
+                box.innerHTML = `<div class="text-center text-slate-500 mt-10 font-bold">لا توجد قنوات في ${currentCat}</div>`;
+                return;
+            }
+            box.innerHTML = filteredChannels.map((ch, index) => {
+                const isFav = favorites.includes(ch[0]);
+                return `
+                <div id="ch-${index}" class="channel-item bg-slate-900/40 border border-slate-800/50 p-4 rounded-xl flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <div class="w-2 h-2 rounded-full ${ch[3] === 'i' ? 'bg-amber-500' : 'bg-emerald-500'}"></div>
+                        <span class="text-lg font-bold text-slate-200">${ch[0]}</span>
+                        ${isFav ? '<i class="fa-solid fa-star text-yellow-500 text-xs"></i>' : ''}
                     </div>
+                    <span class="text-xs bg-slate-800 text-slate-400 px-2 py-1 rounded">${ch[2]}</span>
                 </div>
-            `).join('');
-            TV.refreshFocusable();
+            `}).join('');
+            updateFocus();
         }
 
-        function setCategory(cat) {
-            currentCat = cat;
-            renderChannels();
-        }
+        function updateFocus() {
+            document.querySelectorAll('.tv-focus, .tv-focus-search').forEach(el => el.classList.remove('tv-focus', 'tv-focus-search'));
 
-        function playChannel(url, type, name) {
-            document.body.classList.add('player-active');
-            TV.currentSection = 'player';
-            
-            // تنظيف
-            if (hls) hls.destroy();
-            if (plyr) plyr.destroy();
-            document.getElementById('playerContainer').innerHTML = "";
-            document.getElementById('iPlayer').classList.add('hidden');
-            document.getElementById('statusScreen').classList.remove('hidden');
-
-            if (type === 'i') {
-                const iframe = document.getElementById('iPlayer');
-                iframe.classList.remove('hidden');
-                iframe.src = url;
-                document.getElementById('statusScreen').classList.add('hidden');
-                TV.setSection('player', 0); // تركيز على زر الإغلاق
-            } else {
-                const video = document.createElement('video');
-                video.className = "video-fit-contain";
-                video.autoplay = true;
-                document.getElementById('playerContainer').appendChild(video);
-
-                const startPlyr = () => {
-                    plyr = new Plyr(video, { controls: [], settings: [] });
-                    document.getElementById('statusScreen').classList.add('hidden');
-                    TV.setSection('player', 1); // تركيز على زر التشغيل/الإيقاف
-                };
-
-                if (Hls.isSupported() && url.includes('m3u8')) {
-                    hls = new Hls();
-                    hls.loadSource(url);
-                    hls.attachMedia(video);
-                    hls.on(Hls.Events.MANIFEST_PARSED, startPlyr);
-                } else {
-                    video.src = url;
-                    video.onloadedmetadata = startPlyr;
+            if (currentMode === 'AUTH') {
+                if (focusIndices.auth === 0) authInput.classList.add('tv-focus-search');
+                else authBtn.classList.add('tv-focus');
+            }
+            else if (currentMode === 'MODAL') {
+                const btns = document.querySelectorAll('.modal-btn');
+                if (btns[focusIndices.modal]) btns[focusIndices.modal].classList.add('tv-focus');
+            }
+            else if (currentMode === 'SEARCH') {
+                searchInput.classList.add('tv-focus-search');
+            } 
+            else if (currentMode === 'CATEGORIES') {
+                const el = document.getElementById(`cat-${focusIndices.categories}`);
+                if (el) {
+                    el.classList.add('tv-focus');
+                    el.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
                 }
             }
-        }
-
-        function togglePlay() {
-            if (!plyr) return;
-            const icon = document.getElementById('playIcon');
-            if (plyr.paused) {
-                plyr.play();
-                icon.className = "fa-solid fa-pause text-xl text-white";
-            } else {
-                plyr.pause();
-                icon.className = "fa-solid fa-play text-xl text-white";
+            else if (currentMode === 'CHANNELS') {
+                if (filteredChannels.length > 0) {
+                    const el = document.getElementById(`ch-${focusIndices.channels}`);
+                    if (el) {
+                        el.classList.add('tv-focus');
+                        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
+                } else {
+                    // إذا لم توجد قنوات، نعيد التركيز إلى الأقسام لمنع اختفاء المؤشر
+                    currentMode = 'CATEGORIES';
+                    updateFocus();
+                }
+            } 
+            else if (currentMode === 'PLAYER_CONTROLS') {
+                const btns = document.querySelectorAll('.player-btn');
+                if (btns[focusIndices.controls]) btns[focusIndices.controls].classList.add('tv-focus');
+            }
+            else if (currentMode === 'PLAYER_MENU') {
+                const opts = document.querySelectorAll('.quality-btn');
+                if (opts[focusIndices.menu]) opts[focusIndices.menu].classList.add('tv-focus');
             }
         }
 
-        window.onload = initApp;
+        document.addEventListener('keydown', (e) => {
+            const key = e.key;
+            if (key === 'Escape' || key === 'Backspace' || e.keyCode === 461 || e.keyCode === 10009) {
+                if (document.activeElement !== searchInput && document.activeElement !== authInput) e.preventDefault();
+                handleBackAction();
+                return;
+            }
+
+            if (currentMode === 'AUTH') handleAuthNav(key);
+            else if (currentMode === 'MODAL') handleModalNav(key);
+            else if (currentMode === 'SEARCH') handleSearchNav(key);
+            else if (currentMode === 'CATEGORIES') handleCategoriesNav(key);
+            else if (currentMode === 'CHANNELS') handleChannelsNav(key);
+            else if (currentMode === 'PLAYER_CONTROLS' || currentMode === 'PLAYER_MENU') handlePlayerNav(key);
+            else if (currentMode === 'PLAYER_HIDDEN') {
+                if (key === 'Enter' || key === ' ') showPlayerOverlay();
+            }
+            else if (currentMode === 'IFRAME') {
+                if (key === 'Enter' || key === ' ') closeIframe();
+            }
+        });
+
+        function handleAuthNav(key) {
+            if (key === 'ArrowDown') { focusIndices.auth = 1; authInput.blur(); }
+            else if (key === 'ArrowUp') { focusIndices.auth = 0; }
+            else if (key === 'Enter' || key === ' ') {
+                if (focusIndices.auth === 0) authInput.focus();
+                else handleAuth();
+            }
+            updateFocus();
+        }
+
+        function handleModalNav(key) {
+            const btns = document.querySelectorAll('.modal-btn');
+            if (key === 'ArrowDown') focusIndices.modal = Math.min(focusIndices.modal + 1, 2);
+            else if (key === 'ArrowUp') focusIndices.modal = Math.max(focusIndices.modal - 1, 0);
+            else if (key === 'Enter' || key === ' ') {
+                const btnId = btns[focusIndices.modal].id;
+                if (btnId === 'm-play') {
+                    actionModal.classList.remove('active');
+                    if (selectedChannel[3] === 'i') openIframe(selectedChannel[1]);
+                    else openPlayer(selectedChannel[1], selectedChannel[3], selectedChannel[0]);
+                } else if (btnId === 'm-fav') {
+                    toggleFavorite(selectedChannel[0]);
+                    actionModal.classList.remove('active');
+                    currentMode = 'CHANNELS';
+                    filterChannels();
+                } else {
+                    actionModal.classList.remove('active');
+                    currentMode = 'CHANNELS';
+                }
+            }
+            updateFocus();
+        }
+
+        function toggleFavorite(chName) {
+            if (favorites.includes(chName)) favorites = favorites.filter(f => f !== chName);
+            else favorites.push(chName);
+            localStorage.setItem('yalla_favs', JSON.stringify(favorites));
+            showStatus(favorites.includes(chName) ? "تمت الإضافة للمفضلة" : "تمت الإزالة من المفضلة");
+        }
+
+        function openActionModal(channel) {
+            selectedChannel = channel;
+            currentMode = 'MODAL';
+            focusIndices.modal = 0;
+            document.getElementById('modal-title').innerText = channel[0];
+            document.getElementById('m-fav').innerText = favorites.includes(channel[0]) ? "⭐ إزالة من المفضلة" : "⭐ إضافة للمفضلة";
+            actionModal.classList.add('active');
+            updateFocus();
+        }
+
+        function handleSearchNav(key) {
+            if (key === 'ArrowDown') { searchInput.blur(); currentMode = 'CATEGORIES'; updateFocus(); }
+            else if (key === 'Enter') searchInput.focus();
+        }
+
+        function handleCategoriesNav(key) {
+            const max = document.querySelectorAll('.category-btn').length - 1;
+            if (key === 'ArrowUp') currentMode = 'SEARCH';
+            else if (key === 'ArrowDown') {
+                // إذا كان القسم يحتوي على قنوات، ننتقل إليها
+                if (filteredChannels.length > 0) currentMode = 'CHANNELS';
+            }
+            else if (key === 'ArrowLeft') focusIndices.categories = Math.min(focusIndices.categories + 1, max);
+            else if (key === 'ArrowRight') focusIndices.categories = Math.max(focusIndices.categories - 1, 0);
+            else if (key === 'Enter' || key === ' ') {
+                const btn = document.getElementById(`cat-${focusIndices.categories}`);
+                if(btn) {
+                    currentCat = btn.getAttribute('data-cat');
+                    focusIndices.channels = 0;
+                    filterChannels();
+                    // إذا كان هناك قنوات بعد الفلترة ننتقل لها، وإلا نبقى في الأقسام
+                    if (filteredChannels.length > 0) currentMode = 'CHANNELS';
+                }
+            }
+            updateFocus();
+        }
+
+        function handleChannelsNav(key) {
+            const max = filteredChannels.length - 1;
+            if (max < 0) {
+                currentMode = 'CATEGORIES';
+                updateFocus();
+                return;
+            }
+            if (key === 'ArrowUp') {
+                if (focusIndices.channels === 0) currentMode = 'CATEGORIES';
+                else focusIndices.channels = Math.max(focusIndices.channels - 1, 0);
+            } else if (key === 'ArrowDown') focusIndices.channels = Math.min(focusIndices.channels + 1, max);
+            else if (key === 'ArrowRight') focusIndices.channels = Math.max(focusIndices.channels - 5, 0);
+            else if (key === 'ArrowLeft') focusIndices.channels = Math.min(focusIndices.channels + 5, max);
+            else if (key === 'Enter' || key === ' ') {
+                openActionModal(filteredChannels[focusIndices.channels]);
+            }
+            updateFocus();
+        }
+
+        function handleBackAction() {
+            if (currentMode === 'MODAL') { actionModal.classList.remove('active'); currentMode = 'CHANNELS'; updateFocus(); }
+            else if (currentMode === 'PLAYER_MENU') toggleQualityMenu();
+            else if (currentMode === 'PLAYER_CONTROLS' || currentMode === 'PLAYER_HIDDEN') closePlayer();
+            else if (currentMode === 'IFRAME') closeIframe();
+            else if (currentMode === 'CHANNELS') { currentMode = 'CATEGORIES'; updateFocus(); }
+            else if (currentMode === 'CATEGORIES') { currentMode = 'SEARCH'; updateFocus(); }
+        }
+
+        function openIframe(url) {
+            currentMode = 'IFRAME';
+            iPlayer.src = url;
+            iframeContainer.style.display = 'flex';
+        }
+
+        function closeIframe() {
+            iPlayer.src = "about:blank";
+            iframeContainer.style.display = 'none';
+            currentMode = 'CHANNELS';
+            updateFocus();
+        }
+
+        function openPlayer(url, type, name) {
+            currentMode = 'PLAYER_CONTROLS';
+            playerContainer.classList.add('active');
+            playerLoader.classList.remove('hidden');
+            document.getElementById('player-loading-text').innerText = `جاري تشغيل: ${name}`;
+            
+            if (hls) { hls.destroy(); hls = null; }
+            video.src = "";
+            
+            if (Hls.isSupported() && url.includes('.m3u8')) {
+                hls = new Hls();
+                hls.loadSource(url);
+                hls.attachMedia(video);
+                hls.on(Hls.Events.MANIFEST_PARSED, function() {
+                    playerLoader.classList.add('hidden');
+                    video.play().catch(() => showStatus("اضغط OK للتشغيل"));
+                    setupQualityMenu();
+                    showPlayerOverlay();
+                });
+                hls.on(Hls.Events.ERROR, (e, data) => data.fatal && showStatus("خطأ في الرابط"));
+            } else {
+                video.src = url;
+                video.play().catch(() => showStatus("اضغط OK للتشغيل"));
+                playerLoader.classList.add('hidden');
+                showPlayerOverlay();
+            }
+        }
+
+        function closePlayer() {
+            if (hls) { hls.destroy(); hls = null; }
+            video.pause();
+            video.src = "";
+            playerContainer.classList.remove('active');
+            hidePlayerOverlay();
+            currentMode = 'CHANNELS';
+            updateFocus();
+        }
+
+        function setupQualityMenu() {
+            if(!hls) return;
+            let html = '<div class="menu-option quality-btn tv-focus" data-quality="-1">تلقائي (Auto)</div>';
+            hls.levels.forEach((l, i) => html += `<div class="menu-option quality-btn" data-quality="${i}">${l.height}p</div>`);
+            qualityMenu.innerHTML = html;
+        }
+
+        function handlePlayerNav(key) {
+            if (currentMode === 'PLAYER_CONTROLS') {
+                const max = document.querySelectorAll('.player-btn').length - 1;
+                if (key === 'ArrowLeft') focusIndices.controls = Math.min(focusIndices.controls + 1, max);
+                else if (key === 'ArrowRight') focusIndices.controls = Math.max(focusIndices.controls - 1, 0);
+                else if (key === 'Enter' || key === ' ') {
+                    const btns = document.querySelectorAll('.player-btn');
+                    executePlayerAction(btns[focusIndices.controls].id);
+                }
+            } 
+            else if (currentMode === 'PLAYER_MENU') {
+                const opts = document.querySelectorAll('.quality-btn');
+                const max = opts.length - 1;
+                if (key === 'ArrowUp') focusIndices.menu = Math.max(focusIndices.menu - 1, 0);
+                else if (key === 'ArrowDown') focusIndices.menu = Math.min(focusIndices.menu + 1, max);
+                else if (key === 'Enter' || key === ' ') {
+                    const qIndex = parseInt(opts[focusIndices.menu].getAttribute('data-quality'));
+                    if(hls) hls.currentLevel = qIndex;
+                    document.getElementById('current-quality').innerText = qIndex === -1 ? "تلقائي" : opts[focusIndices.menu].innerText;
+                    toggleQualityMenu();
+                }
+            }
+            updateFocus();
+        }
+
+        function executePlayerAction(btnId) {
+            switch(btnId) {
+                case 'btn-play':
+                    if (video.paused) { video.play(); document.getElementById('play-icon').innerText = '⏸ ايقاف'; }
+                    else { video.pause(); document.getElementById('play-icon').innerText = '▶️ تشغيل'; }
+                    break;
+                case 'btn-mute':
+                    video.muted = !video.muted;
+                    document.getElementById('mute-status').innerText = video.muted ? '🔇 تشغيل الصوت' : '🔊 كتم';
+                    break;
+                case 'btn-quality': toggleQualityMenu(); break;
+                case 'btn-aspect':
+                    currentAspectIndex = (currentAspectIndex + 1) % aspectModes.length;
+                    video.className = 'video-' + aspectModes[currentAspectIndex];
+                    document.getElementById('aspect-text').innerText = aspectLabels[currentAspectIndex];
+                    break;
+                case 'btn-hide': hidePlayerOverlay(); break;
+                case 'btn-exit': closePlayer(); break;
+            }
+        }
+
+        function toggleQualityMenu() {
+            if (currentMode === 'PLAYER_CONTROLS') {
+                qualityMenu.classList.add('active');
+                currentMode = 'PLAYER_MENU';
+                focusIndices.menu = 0;
+            } else {
+                qualityMenu.classList.remove('active');
+                currentMode = 'PLAYER_CONTROLS';
+            }
+            updateFocus();
+        }
+
+        function showPlayerOverlay() {
+            controlsOverlay.classList.add('active');
+            currentMode = 'PLAYER_CONTROLS';
+            focusIndices.controls = 0;
+            updateFocus();
+        }
+
+        function hidePlayerOverlay() {
+            controlsOverlay.classList.remove('active');
+            qualityMenu.classList.remove('active');
+            currentMode = 'PLAYER_HIDDEN';
+            showStatus("تم الإخفاء - اضغط OK للإظهار");
+        }
+
+        function showStatus(text) {
+            statusInfo.innerText = text;
+            statusInfo.classList.add('show');
+            clearTimeout(window.statusTimer);
+            window.statusTimer = setTimeout(() => statusInfo.classList.remove('show'), 3000);
+        }
+
+        searchInput.addEventListener('input', (e) => {
+            searchQuery = e.target.value;
+            focusIndices.channels = 0;
+            filterChannels();
+        });
+
+        window.onload = checkAuth;
     </script>
 </body>
 </html>
