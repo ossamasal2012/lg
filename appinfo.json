@@ -1,0 +1,12 @@
+{
+    "id": "com.otv.osama.app",
+    "version": "1.0.0",
+    "vendor": "OSSAMA",
+    "type": "web",
+    "main": "index.html",
+    "title": "OTV",
+    "icon": "https://i.ibb.co/CKJ5NVv7/Screenshot-2026-04-21-1-52-19-PM.png",
+    "largeIcon": "https://i.ibb.co/CKJ5NVv7/Screenshot-2026-04-21-1-52-19-PM.png",
+    "bgColor": "#000000",
+    "iconColor": "#000000"
+}
