@@ -1,10 +1,10 @@
 {
-    "id": "com.otv.osama.app",
+    "id": "com.ossiptv.osama.app",
     "version": "1.0.0",
     "vendor": "OSSAMA",
     "type": "web",
     "main": "index.html",
-    "title": "OTV",
+    "title": "OSSIPTV",
     "icon": "https://i.ibb.co/CKJ5NVv7/Screenshot-2026-04-21-1-52-19-PM.png",
     "largeIcon": "https://i.ibb.co/CKJ5NVv7/Screenshot-2026-04-21-1-52-19-PM.png",
     "bgColor": "#000000",
