@@ -1,4 +1,4 @@
-name: 🏗️ Build OTV LG WebOS (CORS Ready)
+name: 🏗️ Build OSSIPTV LG WebOS (CORS & Internet Ready)
 
 on:
   push:
@@ -25,23 +25,23 @@ jobs:
       - name: 🗂️ Setup Project Structure
         run: |
           mkdir -p webos-app
+          # تأكد من وجود ملف index.html في المستودع (Repository) الخاص بك
           cp index.html webos-app/index.html
 
-          # إنشاء ملف التعريف مع إعدادات تخطي CORS ودعم الإنترنت الكامل
+          # إنشاء ملف appinfo.json بناءً على بياناتك الجديدة مع إعدادات تخطي القيود
           cat > webos-app/appinfo.json << 'EOF'
           {
-              "id": "com.otv.osama.app",
-              "version": "1.1.0",
+              "id": "com.ossiptv.osama.app",
+              "version": "1.0.0",
               "vendor": "OSSAMA",
               "type": "web",
               "main": "index.html",
-              "title": "OTV",
+              "title": "OSSIPTV",
               "icon": "icon.png",
               "largeIcon": "largeIcon.png",
               "bgColor": "#000000",
               "iconColor": "#000000",
               "resolution": "1920x1080",
-              "disableBackHistoryAPI": false,
               "supportXHR": true,
               "trustLevel": "trusted",
               "requiredPermissions": [
@@ -53,20 +53,19 @@ jobs:
           }
           EOF
 
-      - name: 🖼️ Setup New App Icon
+      - name: 🖼️ Setup App Icon
         run: |
-          # تحميل الأيقونة الجديدة التي أرسلتها
+          # تحميل الأيقونة التي حددتها في ملفك
           curl -L "https://i.ibb.co/Mx1d7J1r/Screenshot-2026-04-24-12-02-40-AM.png" -o webos-app/icon.png
-          # نسخ الأيقونة لتكون الأيقونة الكبيرة أيضاً
           cp webos-app/icon.png webos-app/largeIcon.png
 
-      - name: 📦 Package IPK (CORS Support)
+      - name: 📦 Package IPK
         run: |
-          # بناء الحزمة مع تفعيل الخصائص المتقدمة
+          # بناء الحزمة النهائية بصيغة .ipk
           ares-package webos-app -o ./output
 
       - name: 📤 Upload IPK Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: OTV-LGTV-CORS-Fix
+          name: OSSIPTV-LGTV-Package
           path: output/*.ipk
