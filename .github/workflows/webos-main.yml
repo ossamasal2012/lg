@@ -1,0 +1,72 @@
+name: 🏗️ Build OTV LG WebOS (CORS Ready)
+
+on:
+  push:
+    branches: [main, master]
+  workflow_dispatch:
+
+jobs:
+  build-webos:
+    name: Build LG TV IPK
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: ⬇️ Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: 🟢 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: 🛠️ Install webOS TV CLI
+        run: npm install -g @webos-tools/cli
+
+      - name: 🗂️ Setup Project Structure
+        run: |
+          mkdir -p webos-app
+          cp index.html webos-app/index.html
+
+          # إنشاء ملف التعريف مع إعدادات تخطي CORS ودعم الإنترنت الكامل
+          cat > webos-app/appinfo.json << 'EOF'
+          {
+              "id": "com.otv.osama.app",
+              "version": "1.1.0",
+              "vendor": "OSSAMA",
+              "type": "web",
+              "main": "index.html",
+              "title": "OTV",
+              "icon": "icon.png",
+              "largeIcon": "largeIcon.png",
+              "bgColor": "#000000",
+              "iconColor": "#000000",
+              "resolution": "1920x1080",
+              "disableBackHistoryAPI": false,
+              "supportXHR": true,
+              "trustLevel": "trusted",
+              "requiredPermissions": [
+                  "internet",
+                  "network.state",
+                  "audio.output",
+                  "video.output"
+              ]
+          }
+          EOF
+
+      - name: 🖼️ Setup New App Icon
+        run: |
+          # تحميل الأيقونة الجديدة التي أرسلتها
+          curl -L "https://i.ibb.co/Mx1d7J1r/Screenshot-2026-04-24-12-02-40-AM.png" -o webos-app/icon.png
+          # نسخ الأيقونة لتكون الأيقونة الكبيرة أيضاً
+          cp webos-app/icon.png webos-app/largeIcon.png
+
+      - name: 📦 Package IPK (CORS Support)
+        run: |
+          # بناء الحزمة مع تفعيل الخصائص المتقدمة
+          ares-package webos-app -o ./output
+
+      - name: 📤 Upload IPK Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: OTV-LGTV-CORS-Fix
+          path: output/*.ipk
