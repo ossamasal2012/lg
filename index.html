@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>OSS IPTV</title>
+    <title>يلا گـــول | Yalla Goal TV</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/hls.js/1.4.12/hls.min.js"></script>
@@ -19,6 +19,13 @@
             overflow: hidden;
             margin: 0;
             user-select: none;
+            /* منع الحواف التلقائية للمتصفح في أجهزة التلفاز */
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        /* منع الحافة البرتقالية (الـ Outline التلقائي) */
+        *:focus {
+            outline: none !important;
         }
 
         #auth-screen {
@@ -32,12 +39,14 @@
             background: linear-gradient(270deg, rgba(16, 185, 129, 0.4) 0%, rgba(15, 23, 42, 0.9) 100%) !important;
             box-shadow: 0 0 15px rgba(16, 185, 129, 0.6);
             z-index: 10;
+            outline: none !important;
         }
         
         .tv-focus-search {
             border-color: #10b981 !important;
             box-shadow: 0 0 10px rgba(16, 185, 129, 0.5);
             background-color: #0f172a !important;
+            outline: none !important;
         }
 
         .tv-focus-iframe-btn {
@@ -45,11 +54,13 @@
             border-color: #f87171 !important;
             box-shadow: 0 0 20px rgba(239, 68, 68, 0.6);
             transform: scale(1.05);
+            outline: none !important;
         }
 
         .channel-item, .category-btn {
             transition: all 0.2s ease;
             border: 2px solid transparent;
+            outline: none !important;
         }
 
         .no-scrollbar::-webkit-scrollbar { display: none; }
@@ -144,7 +155,7 @@
     <!-- شاشة تسجيل الدخول -->
     <div id="auth-screen">
         <div class="text-center mb-8">
-            <h1 class="text-4xl font-black text-emerald-500 mb-2"> OSS IPTV </h1>
+            <h1 class="text-4xl font-black text-emerald-500 mb-2">يلا گـــول TV</h1>
             <p class="text-slate-400">يرجى إدخال الرمز السري للتفعيل</p>
         </div>
         <div class="w-full max-w-md px-6">
@@ -169,7 +180,7 @@
     <div id="main-app" class="flex flex-col h-full w-full hidden">
         <aside class="w-full h-full flex flex-col bg-slate-950 border-l border-slate-900 z-50">
             <div class="p-4 border-b border-slate-900 text-center shrink-0">
-                <h1 class="text-2xl font-black text-emerald-500 tracking-tight"> OSS IPTV</h1>
+                <h1 class="text-2xl font-black text-emerald-500 tracking-tight">يلا گـــول TV</h1>
                 <p class="text-[10px] text-slate-500 font-bold uppercase tracking-widest mt-1">نسخة التلفاز الذكي الشاملة</p>
             </div>
 
@@ -350,7 +361,10 @@
         }
 
         function updateFocus() {
-            document.querySelectorAll('.tv-focus, .tv-focus-search').forEach(el => el.classList.remove('tv-focus', 'tv-focus-search'));
+            // إزالة التحديد القديم
+            document.querySelectorAll('.tv-focus, .tv-focus-search').forEach(el => {
+                el.classList.remove('tv-focus', 'tv-focus-search');
+            });
 
             if (currentMode === 'AUTH') {
                 if (focusIndices.auth === 0) authInput.classList.add('tv-focus-search');
@@ -367,7 +381,7 @@
                 const el = document.getElementById(`cat-${focusIndices.categories}`);
                 if (el) {
                     el.classList.add('tv-focus');
-                    el.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
+                    el.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
                 }
             }
             else if (currentMode === 'CHANNELS') {
@@ -375,10 +389,10 @@
                     const el = document.getElementById(`ch-${focusIndices.channels}`);
                     if (el) {
                         el.classList.add('tv-focus');
+                        // تحسين التمرير لضمان بقاء المؤشر مرئياً دائماً
                         el.scrollIntoView({ behavior: 'smooth', block: 'center' });
                     }
                 } else {
-                    // إذا لم توجد قنوات، نعيد التركيز إلى الأقسام لمنع اختفاء المؤشر
                     currentMode = 'CATEGORIES';
                     updateFocus();
                 }
@@ -474,7 +488,6 @@
             const max = document.querySelectorAll('.category-btn').length - 1;
             if (key === 'ArrowUp') currentMode = 'SEARCH';
             else if (key === 'ArrowDown') {
-                // إذا كان القسم يحتوي على قنوات، ننتقل إليها
                 if (filteredChannels.length > 0) currentMode = 'CHANNELS';
             }
             else if (key === 'ArrowLeft') focusIndices.categories = Math.min(focusIndices.categories + 1, max);
@@ -485,7 +498,6 @@
                     currentCat = btn.getAttribute('data-cat');
                     focusIndices.channels = 0;
                     filterChannels();
-                    // إذا كان هناك قنوات بعد الفلترة ننتقل لها، وإلا نبقى في الأقسام
                     if (filteredChannels.length > 0) currentMode = 'CHANNELS';
                 }
             }
