@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>يلا گـــول | Yalla Goal TV</title>
+    <title>OSS IPTV</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/hls.js/1.4.12/hls.min.js"></script>
@@ -19,14 +19,10 @@
             overflow: hidden;
             margin: 0;
             user-select: none;
-            /* منع الحواف التلقائية للمتصفح في أجهزة التلفاز */
             -webkit-tap-highlight-color: transparent;
         }
 
-        /* منع الحافة البرتقالية (الـ Outline التلقائي) */
-        *:focus {
-            outline: none !important;
-        }
+        *:focus { outline: none !important; }
 
         #auth-screen {
             position: fixed; inset: 0; background: #020617; z-index: 99999;
@@ -34,7 +30,6 @@
         }
 
         .tv-focus {
-            transform: scale(1.03);
             border-color: #10b981 !important;
             background: linear-gradient(270deg, rgba(16, 185, 129, 0.4) 0%, rgba(15, 23, 42, 0.9) 100%) !important;
             box-shadow: 0 0 15px rgba(16, 185, 129, 0.6);
@@ -58,19 +53,23 @@
         }
 
         .channel-item, .category-btn {
-            transition: all 0.2s ease;
+            /* بدون transition نهائياً — يمنع أي وميض عند التنقل السريع */
+            transition: none;
             border: 2px solid transparent;
             outline: none !important;
         }
 
+        /* FIX: إخفاء الـ scrollbar مع إبقاء التمرير يعمل */
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
 
-        /* نافذة الخيارات المنبثقة */
+        /* FIX: النافذة المنبثقة - كانت display:none بدل flex عند الإخفاء */
         #action-modal {
             position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 9000;
             display: none; align-items: center; justify-content: center;
         }
-        #action-modal.active { display: flex; }
+        #action-modal.active { display: flex !important; }
+
         .modal-content {
             background: #0f172a; border: 2px solid #1e293b; padding: 30px;
             border-radius: 24px; width: 90%; max-width: 400px; text-align: center;
@@ -78,18 +77,18 @@
         .modal-btn {
             width: 100%; padding: 15px; margin: 8px 0; border-radius: 12px;
             font-weight: bold; font-size: 1.1rem; transition: all 0.2s;
-            background: #1e293b; border: 2px solid transparent;
+            background: #1e293b; border: 2px solid transparent; cursor: pointer;
         }
-        .modal-btn.tv-focus { background: #10b981; color: #fff; border-color: #34d399; }
+        .modal-btn.tv-focus { background: #10b981 !important; color: #fff; border-color: #34d399 !important; transform: scale(1.02); }
 
-        /* --- المشغل المخصص --- */
+        /* المشغل */
         #player-container {
             position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
             background-color: #000; z-index: 9999; display: none; flex-direction: column;
         }
         #player-container.active { display: flex; }
         video { width: 100%; height: 100%; position: absolute; transition: all 0.3s ease; }
-        .video-fit { object-fit: contain; }
+        .video-fit  { object-fit: contain; }
         .video-fill { object-fit: fill; }
         .video-zoom { object-fit: cover; }
 
@@ -102,14 +101,13 @@
 
         .control-item {
             padding: 12px 20px; margin: 5px; border-radius: 12px;
-            background: rgba(255, 255, 255, 0.1); transition: all 0.2s ease-in-out;
+            background: rgba(255,255,255,0.1); transition: all 0.2s ease-in-out;
             border: 3px solid transparent; text-align: center; min-width: 120px;
             font-size: 1.1rem; display: flex; align-items: center; justify-content: center; gap: 8px;
         }
-
         .control-item.tv-focus {
             background: #ffffff !important; color: #000 !important; border-color: #3b82f6 !important;
-            transform: scale(1.05); box-shadow: 0 0 20px rgba(59, 130, 246, 0.5);
+            transform: scale(1.05); box-shadow: 0 0 20px rgba(59,130,246,0.5);
         }
 
         .settings-menu {
@@ -118,7 +116,6 @@
             min-width: 220px; border: 2px solid #374151; box-shadow: 0 10px 25px rgba(0,0,0,0.5); z-index: 60;
         }
         .settings-menu.active { display: flex; }
-        
         .menu-option {
             padding: 12px 20px; margin: 4px 0; border-radius: 8px; text-align: right; transition: background 0.2s;
         }
@@ -143,11 +140,10 @@
         #iPlayer { width: 100%; height: 100%; border: none; flex-grow: 1; background: #000; }
         #iframe-top-bar { position: absolute; top: 20px; left: 20px; z-index: 10010; }
         .iframe-back-btn {
-            background-color: rgba(153, 27, 27, 0.8); color: white; border: 2px solid rgba(248, 113, 113, 0.5);
+            background-color: rgba(153,27,27,0.8); color: white; border: 2px solid rgba(248,113,113,0.5);
             padding: 10px 25px; border-radius: 12px; font-weight: bold; font-size: 1.2rem;
             display: flex; align-items: center; gap: 10px; transition: all 0.2s;
         }
-
     </style>
 </head>
 <body>
@@ -155,11 +151,11 @@
     <!-- شاشة تسجيل الدخول -->
     <div id="auth-screen">
         <div class="text-center mb-8">
-            <h1 class="text-4xl font-black text-emerald-500 mb-2">يلا گـــول TV</h1>
+            <h1 class="text-4xl font-black text-emerald-500 mb-2">OSS IPTV</h1>
             <p class="text-slate-400">يرجى إدخال الرمز السري للتفعيل</p>
         </div>
         <div class="w-full max-w-md px-6">
-            <input type="password" id="authInput" placeholder="أدخل الرمز هنا..." 
+            <input type="password" id="authInput" placeholder="أدخل الرمز هنا..."
                 class="w-full bg-slate-900 border-2 border-slate-800 rounded-2xl py-5 px-6 text-2xl text-center focus:outline-none text-emerald-400 placeholder:text-slate-700 tracking-widest mb-6 transition-all">
             <button id="authBtn" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-4 rounded-2xl text-xl shadow-lg shadow-emerald-900/20 transition-all border-b-4 border-emerald-800">تفعيل التطبيق</button>
             <p id="authError" class="text-red-500 text-center mt-4 font-bold hidden">الرمز السري غير صحيح!</p>
@@ -169,10 +165,10 @@
     <!-- النافذة المنبثقة للخيارات -->
     <div id="action-modal">
         <div class="modal-content">
-            <h2 id="modal-title" class="text-xl font-bold text-white mb-6">قناة بي ان سبورت</h2>
-            <button id="m-play" class="modal-btn tv-focus">▶️ تشغيل القناة</button>
-            <button id="m-fav" class="modal-btn">⭐ إضافة للمفضلة</button>
-            <button id="m-cancel" class="modal-btn !text-red-400">❌ إلغاء</button>
+            <h2 id="modal-title" class="text-xl font-bold text-white mb-6"></h2>
+            <button id="m-play" class="modal-btn">▶️ تشغيل القناة</button>
+            <button id="m-fav"  class="modal-btn">⭐ إضافة للمفضلة</button>
+            <button id="m-cancel" class="modal-btn" style="color:#f87171;">❌ إلغاء</button>
         </div>
     </div>
 
@@ -180,20 +176,21 @@
     <div id="main-app" class="flex flex-col h-full w-full hidden">
         <aside class="w-full h-full flex flex-col bg-slate-950 border-l border-slate-900 z-50">
             <div class="p-4 border-b border-slate-900 text-center shrink-0">
-                <h1 class="text-2xl font-black text-emerald-500 tracking-tight">يلا گـــول TV</h1>
+                <h1 class="text-2xl font-black text-emerald-500 tracking-tight">OSS IPTV</h1>
                 <p class="text-[10px] text-slate-500 font-bold uppercase tracking-widest mt-1">نسخة التلفاز الذكي الشاملة</p>
             </div>
 
             <div class="p-4 border-b border-slate-900 shrink-0">
                 <div class="relative">
                     <i class="fa-solid fa-magnifying-glass absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 text-sm"></i>
-                    <input type="text" id="searchInput" placeholder="ابحث عن قناة (اضغط OK للكتابة)" 
+                    <input type="text" id="searchInput" placeholder="ابحث عن قناة (اضغط OK للكتابة)"
                         class="w-full bg-slate-900 border-2 border-slate-800 rounded-xl py-3 px-4 pr-10 text-sm focus:outline-none text-white placeholder:text-slate-500 transition-all">
                 </div>
             </div>
 
             <div id="categoryMenu" class="p-4 overflow-x-auto no-scrollbar flex gap-2 shrink-0 border-b border-slate-900 bg-slate-900/50"></div>
 
+            <!-- FIX: حددنا id للحاوية بشكل صريح لضبط التمرير يدوياً -->
             <div id="channelsBox" class="flex-1 overflow-y-auto p-4 space-y-2 no-scrollbar relative">
                 <div id="app-loader" class="absolute inset-0 flex flex-col items-center justify-center">
                     <div class="w-12 h-12 rounded-full border-4 border-slate-800 border-t-emerald-500 animate-spin"></div>
@@ -203,7 +200,7 @@
         </aside>
     </div>
 
-    <!-- شاشة الـ Iframe المخصصة -->
+    <!-- شاشة الـ Iframe -->
     <div id="iframe-container">
         <div id="iframe-top-bar">
             <div id="iframe-back" class="iframe-back-btn tv-focus-iframe-btn">
@@ -225,12 +222,12 @@
 
         <div id="controlsOverlay" class="player-overlay">
             <div class="flex flex-wrap justify-center items-center px-4 gap-2">
-                <div id="btn-play" class="control-item player-btn" data-type="action"><span id="play-icon">⏸ ايقاف</span></div>
-                <div id="btn-mute" class="control-item player-btn" data-type="action"><span id="mute-status">🔊 كتم</span></div>
+                <div id="btn-play"   class="control-item player-btn" data-type="action"><span id="play-icon">⏸ ايقاف</span></div>
+                <div id="btn-mute"   class="control-item player-btn" data-type="action"><span id="mute-status">🔊 كتم</span></div>
                 <div id="btn-quality" class="control-item player-btn" data-type="action">⚙️ <span id="current-quality">تلقائي</span></div>
                 <div id="btn-aspect" class="control-item player-btn" data-type="action">🖼️ <span id="aspect-text">Fit</span></div>
-                <div id="btn-hide" class="control-item player-btn bg-slate-800/80" data-type="action">🙈 إخفاء</div>
-                <div id="btn-exit" class="control-item player-btn !bg-red-900/50 !border-red-500/50" data-type="action">🔙 رجوع</div>
+                <div id="btn-hide"   class="control-item player-btn bg-slate-800/80" data-type="action">🙈 إخفاء</div>
+                <div id="btn-exit"   class="control-item player-btn !bg-red-900/50 !border-red-500/50" data-type="action">🔙 رجوع</div>
             </div>
             <div id="qualityMenu" class="settings-menu">
                 <div class="menu-option quality-btn tv-focus" data-quality="-1">تلقائي (Auto)</div>
@@ -239,47 +236,43 @@
     </div>
 
     <script>
+        // ─── الحالة العامة ────────────────────────────────────────────────
         let myChannels = [];
         let filteredChannels = [];
         let favorites = JSON.parse(localStorage.getItem('yalla_favs')) || [];
         let hls = null;
         let currentCat = "الكل";
         let searchQuery = "";
-        let currentMode = 'AUTH'; 
+        let currentMode = 'AUTH';
         let selectedChannel = null;
-        
+
         const SECRET_CODE = "ossamatt22";
-        
-        let focusIndices = {
-            auth: 0,
-            channels: 0,
-            categories: 0,
-            controls: 0,
-            menu: 0,
-            modal: 0
-        };
 
-        const authScreen = document.getElementById('auth-screen');
-        const authInput = document.getElementById('authInput');
-        const authBtn = document.getElementById('authBtn');
-        const authError = document.getElementById('authError');
-        const mainApp = document.getElementById('main-app');
-        const actionModal = document.getElementById('action-modal');
+        let focusIndices = { auth: 0, channels: 0, categories: 0, controls: 0, menu: 0, modal: 0 };
 
-        const searchInput = document.getElementById('searchInput');
-        const video = document.getElementById('video');
+        // ─── العناصر ──────────────────────────────────────────────────────
+        const authScreen      = document.getElementById('auth-screen');
+        const authInput       = document.getElementById('authInput');
+        const authBtn         = document.getElementById('authBtn');
+        const authError       = document.getElementById('authError');
+        const mainApp         = document.getElementById('main-app');
+        const actionModal     = document.getElementById('action-modal');
+        const searchInput     = document.getElementById('searchInput');
+        const video           = document.getElementById('video');
         const playerContainer = document.getElementById('player-container');
         const iframeContainer = document.getElementById('iframe-container');
-        const iPlayer = document.getElementById('iPlayer');
+        const iPlayer         = document.getElementById('iPlayer');
         const controlsOverlay = document.getElementById('controlsOverlay');
-        const qualityMenu = document.getElementById('qualityMenu');
-        const statusInfo = document.getElementById('statusInfo');
-        const playerLoader = document.getElementById('player-loader');
-        
-        const aspectModes = ['fit', 'fill', 'zoom'];
+        const qualityMenu     = document.getElementById('qualityMenu');
+        const statusInfo      = document.getElementById('statusInfo');
+        const playerLoader    = document.getElementById('player-loader');
+        const channelsBox     = document.getElementById('channelsBox');
+
+        const aspectModes  = ['fit', 'fill', 'zoom'];
         const aspectLabels = ['Fit', 'Fill', 'Zoom'];
         let currentAspectIndex = 0;
 
+        // ─── مصادقة ───────────────────────────────────────────────────────
         function checkAuth() {
             if (localStorage.getItem('yalla_goal_auth') === 'true') proceedToApp();
             else { currentMode = 'AUTH'; updateFocus(); }
@@ -303,6 +296,7 @@
             loadChannels();
         }
 
+        // ─── تحميل القنوات ────────────────────────────────────────────────
         async function loadChannels() {
             try {
                 const res = await fetch("https://raw.githubusercontent.com/ossamasal2012/yalla-data/main/channels.json");
@@ -312,26 +306,27 @@
                 filterChannels();
             } catch (err) {
                 console.error("Error", err);
-                document.getElementById('app-loader').innerHTML = '<span class="text-red-500 font-bold">خطأ في الاتصال</span>';
+                document.getElementById('app-loader').innerHTML = '<span class="text-red-500 font-bold">خطأ في الاتصال بالإنترنت</span>';
             }
         }
 
         function renderMenu() {
             const cats = ["المفضلة", "الكل", ...new Set(myChannels.map(c => c[2]))];
-            const menuHtml = cats.map((c, index) => `
-                <button id="cat-${index}" class="category-btn px-4 py-2 rounded-lg text-sm font-bold transition-all border border-slate-800 bg-slate-900 text-slate-400 whitespace-nowrap" data-cat="${c}">
+            document.getElementById('categoryMenu').innerHTML = cats.map((c, i) => `
+                <button id="cat-${i}" class="category-btn px-4 py-2 rounded-lg text-sm font-bold border border-slate-800 bg-slate-900 text-slate-400 whitespace-nowrap" data-cat="${c}">
                     ${c === "المفضلة" ? '⭐ المفضلة' : c}
                 </button>
             `).join('');
-            document.getElementById('categoryMenu').innerHTML = menuHtml;
         }
 
         function filterChannels() {
             if (currentCat === "المفضلة") {
-                filteredChannels = myChannels.filter(c => favorites.includes(c[0]) && c[0].toLowerCase().includes(searchQuery.toLowerCase()));
+                filteredChannels = myChannels.filter(c =>
+                    favorites.includes(c[0]) && c[0].toLowerCase().includes(searchQuery.toLowerCase())
+                );
             } else {
                 filteredChannels = myChannels.filter(c => {
-                    const matchCat = currentCat === "الكل" || c[2] === currentCat;
+                    const matchCat  = currentCat === "الكل" || c[2] === currentCat;
                     const matchSearch = c[0].toLowerCase().includes(searchQuery.toLowerCase());
                     return matchCat && matchSearch;
                 });
@@ -340,28 +335,31 @@
         }
 
         function renderChannels() {
-            const box = document.getElementById('channelsBox');
-            if(filteredChannels.length === 0) {
-                box.innerHTML = `<div class="text-center text-slate-500 mt-10 font-bold">لا توجد قنوات في ${currentCat}</div>`;
+            if (filteredChannels.length === 0) {
+                channelsBox.innerHTML = `<div class="text-center text-slate-500 mt-10 font-bold">لا توجد قنوات في هذا التصنيف</div>`;
                 return;
             }
-            box.innerHTML = filteredChannels.map((ch, index) => {
+            channelsBox.innerHTML = filteredChannels.map((ch, i) => {
                 const isFav = favorites.includes(ch[0]);
                 return `
-                <div id="ch-${index}" class="channel-item bg-slate-900/40 border border-slate-800/50 p-4 rounded-xl flex items-center justify-between">
+                <div id="ch-${i}" class="channel-item bg-slate-900/40 border border-slate-800/50 p-4 rounded-xl flex items-center justify-between">
                     <div class="flex items-center gap-3">
                         <div class="w-2 h-2 rounded-full ${ch[3] === 'i' ? 'bg-amber-500' : 'bg-emerald-500'}"></div>
                         <span class="text-lg font-bold text-slate-200">${ch[0]}</span>
                         ${isFav ? '<i class="fa-solid fa-star text-yellow-500 text-xs"></i>' : ''}
                     </div>
                     <span class="text-xs bg-slate-800 text-slate-400 px-2 py-1 rounded">${ch[2]}</span>
-                </div>
-            `}).join('');
+                </div>`;
+            }).join('');
+
+            // FIX: إعادة ضبط التمرير للأعلى عند تغيير الفئة
+            channelsBox.scrollTop = 0;
+            if (focusIndices.channels >= filteredChannels.length) focusIndices.channels = 0;
             updateFocus();
         }
 
+        // ─── تحديث التركيز ────────────────────────────────────────────────
         function updateFocus() {
-            // إزالة التحديد القديم
             document.querySelectorAll('.tv-focus, .tv-focus-search').forEach(el => {
                 el.classList.remove('tv-focus', 'tv-focus-search');
             });
@@ -369,57 +367,70 @@
             if (currentMode === 'AUTH') {
                 if (focusIndices.auth === 0) authInput.classList.add('tv-focus-search');
                 else authBtn.classList.add('tv-focus');
-            }
-            else if (currentMode === 'MODAL') {
+
+            } else if (currentMode === 'MODAL') {
                 const btns = document.querySelectorAll('.modal-btn');
                 if (btns[focusIndices.modal]) btns[focusIndices.modal].classList.add('tv-focus');
-            }
-            else if (currentMode === 'SEARCH') {
+
+            } else if (currentMode === 'SEARCH') {
                 searchInput.classList.add('tv-focus-search');
-            } 
-            else if (currentMode === 'CATEGORIES') {
+
+            } else if (currentMode === 'CATEGORIES') {
                 const el = document.getElementById(`cat-${focusIndices.categories}`);
                 if (el) {
                     el.classList.add('tv-focus');
                     el.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
                 }
-            }
-            else if (currentMode === 'CHANNELS') {
-                if (filteredChannels.length > 0) {
-                    const el = document.getElementById(`ch-${focusIndices.channels}`);
-                    if (el) {
-                        el.classList.add('tv-focus');
-                        // تحسين التمرير لضمان بقاء المؤشر مرئياً دائماً
-                        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+            } else if (currentMode === 'CHANNELS') {
+                if (filteredChannels.length === 0) { currentMode = 'CATEGORIES'; updateFocus(); return; }
+                const el = document.getElementById(`ch-${focusIndices.channels}`);
+                if (el) {
+                    el.classList.add('tv-focus');
+                    // FIX: تمرير يدوي دقيق بدل scrollIntoView الذي يسبب اهتزازاً
+                    const boxTop    = channelsBox.scrollTop;
+                    const boxBottom = boxTop + channelsBox.clientHeight;
+                    const elTop     = el.offsetTop;
+                    const elBottom  = elTop + el.offsetHeight;
+                    const margin    = 12;
+
+                    if (elTop - margin < boxTop) {
+                        channelsBox.scrollTop = elTop - margin;
+                    } else if (elBottom + margin > boxBottom) {
+                        channelsBox.scrollTop = elBottom + margin - channelsBox.clientHeight;
                     }
-                } else {
-                    currentMode = 'CATEGORIES';
-                    updateFocus();
                 }
-            } 
-            else if (currentMode === 'PLAYER_CONTROLS') {
+
+            } else if (currentMode === 'PLAYER_CONTROLS') {
                 const btns = document.querySelectorAll('.player-btn');
                 if (btns[focusIndices.controls]) btns[focusIndices.controls].classList.add('tv-focus');
-            }
-            else if (currentMode === 'PLAYER_MENU') {
+
+            } else if (currentMode === 'PLAYER_MENU') {
                 const opts = document.querySelectorAll('.quality-btn');
                 if (opts[focusIndices.menu]) opts[focusIndices.menu].classList.add('tv-focus');
             }
         }
 
+        // ─── التنقل بلوحة المفاتيح ────────────────────────────────────────
         document.addEventListener('keydown', (e) => {
             const key = e.key;
-            if (key === 'Escape' || key === 'Backspace' || e.keyCode === 461 || e.keyCode === 10009) {
+            const isBack = key === 'Escape' || key === 'Backspace' || e.keyCode === 461 || e.keyCode === 10009;
+
+            if (isBack) {
                 if (document.activeElement !== searchInput && document.activeElement !== authInput) e.preventDefault();
                 handleBackAction();
                 return;
             }
 
-            if (currentMode === 'AUTH') handleAuthNav(key);
-            else if (currentMode === 'MODAL') handleModalNav(key);
-            else if (currentMode === 'SEARCH') handleSearchNav(key);
-            else if (currentMode === 'CATEGORIES') handleCategoriesNav(key);
-            else if (currentMode === 'CHANNELS') handleChannelsNav(key);
+            // منع التمرير الافتراضي للسهام — ما عدا المسافة إذا كان المستخدم يكتب في البحث
+            if (['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(key)) e.preventDefault();
+            if (key === ' ' && document.activeElement !== searchInput) e.preventDefault();
+
+            if      (currentMode === 'AUTH')           handleAuthNav(key);
+            else if (currentMode === 'MODAL')          handleModalNav(key);
+            else if (currentMode === 'SEARCH')         handleSearchNav(key);
+            else if (currentMode === 'CATEGORIES')     handleCategoriesNav(key);
+            else if (currentMode === 'CHANNELS')       handleChannelsNav(key);
             else if (currentMode === 'PLAYER_CONTROLS' || currentMode === 'PLAYER_MENU') handlePlayerNav(key);
             else if (currentMode === 'PLAYER_HIDDEN') {
                 if (key === 'Enter' || key === ' ') showPlayerOverlay();
@@ -430,8 +441,8 @@
         });
 
         function handleAuthNav(key) {
-            if (key === 'ArrowDown') { focusIndices.auth = 1; authInput.blur(); }
-            else if (key === 'ArrowUp') { focusIndices.auth = 0; }
+            if      (key === 'ArrowDown') { focusIndices.auth = 1; authInput.blur(); }
+            else if (key === 'ArrowUp')   { focusIndices.auth = 0; }
             else if (key === 'Enter' || key === ' ') {
                 if (focusIndices.auth === 0) authInput.focus();
                 else handleAuth();
@@ -441,60 +452,70 @@
 
         function handleModalNav(key) {
             const btns = document.querySelectorAll('.modal-btn');
-            if (key === 'ArrowDown') focusIndices.modal = Math.min(focusIndices.modal + 1, 2);
-            else if (key === 'ArrowUp') focusIndices.modal = Math.max(focusIndices.modal - 1, 0);
+            if      (key === 'ArrowDown') focusIndices.modal = Math.min(focusIndices.modal + 1, btns.length - 1);
+            else if (key === 'ArrowUp')   focusIndices.modal = Math.max(focusIndices.modal - 1, 0);
             else if (key === 'Enter' || key === ' ') {
-                const btnId = btns[focusIndices.modal].id;
-                if (btnId === 'm-play') {
-                    actionModal.classList.remove('active');
-                    if (selectedChannel[3] === 'i') openIframe(selectedChannel[1]);
-                    else openPlayer(selectedChannel[1], selectedChannel[3], selectedChannel[0]);
-                } else if (btnId === 'm-fav') {
-                    toggleFavorite(selectedChannel[0]);
-                    actionModal.classList.remove('active');
-                    currentMode = 'CHANNELS';
-                    filterChannels();
-                } else {
-                    actionModal.classList.remove('active');
-                    currentMode = 'CHANNELS';
-                }
+                executeModalAction(btns[focusIndices.modal].id);
+                return; // updateFocus يُستدعى داخل executeModalAction
             }
             updateFocus();
+        }
+
+        // FIX: دالة منفصلة لتنفيذ إجراء الـ Modal (أوضح وأسهل للتتبع)
+        function executeModalAction(btnId) {
+            if (btnId === 'm-play') {
+                actionModal.classList.remove('active');
+                currentMode = 'CHANNELS';
+                if (selectedChannel[3] === 'i') openIframe(selectedChannel[1]);
+                else openPlayer(selectedChannel[1], selectedChannel[3], selectedChannel[0]);
+            } else if (btnId === 'm-fav') {
+                toggleFavorite(selectedChannel[0]);
+                actionModal.classList.remove('active');
+                currentMode = 'CHANNELS';
+                filterChannels();
+            } else {
+                // إلغاء
+                actionModal.classList.remove('active');
+                currentMode = 'CHANNELS';
+                updateFocus();
+            }
         }
 
         function toggleFavorite(chName) {
             if (favorites.includes(chName)) favorites = favorites.filter(f => f !== chName);
             else favorites.push(chName);
             localStorage.setItem('yalla_favs', JSON.stringify(favorites));
-            showStatus(favorites.includes(chName) ? "تمت الإضافة للمفضلة" : "تمت الإزالة من المفضلة");
+            showStatus(favorites.includes(chName) ? "⭐ تمت الإضافة للمفضلة" : "🗑 تمت الإزالة من المفضلة");
         }
 
+        // FIX: الدالة الرئيسية لفتح نافذة الخيارات
         function openActionModal(channel) {
             selectedChannel = channel;
             currentMode = 'MODAL';
             focusIndices.modal = 0;
             document.getElementById('modal-title').innerText = channel[0];
-            document.getElementById('m-fav').innerText = favorites.includes(channel[0]) ? "⭐ إزالة من المفضلة" : "⭐ إضافة للمفضلة";
+            document.getElementById('m-fav').innerText = favorites.includes(channel[0])
+                ? "⭐ إزالة من المفضلة" : "⭐ إضافة للمفضلة";
             actionModal.classList.add('active');
             updateFocus();
         }
 
         function handleSearchNav(key) {
-            if (key === 'ArrowDown') { searchInput.blur(); currentMode = 'CATEGORIES'; updateFocus(); }
-            else if (key === 'Enter') searchInput.focus();
+            if      (key === 'ArrowDown') { searchInput.blur(); currentMode = 'CATEGORIES'; updateFocus(); }
+            else if (key === 'Enter')     searchInput.focus();
         }
 
         function handleCategoriesNav(key) {
             const max = document.querySelectorAll('.category-btn').length - 1;
-            if (key === 'ArrowUp') currentMode = 'SEARCH';
+            if      (key === 'ArrowUp')   { currentMode = 'SEARCH'; updateFocus(); return; }
             else if (key === 'ArrowDown') {
-                if (filteredChannels.length > 0) currentMode = 'CHANNELS';
+                if (filteredChannels.length > 0) { currentMode = 'CHANNELS'; updateFocus(); return; }
             }
-            else if (key === 'ArrowLeft') focusIndices.categories = Math.min(focusIndices.categories + 1, max);
+            else if (key === 'ArrowLeft')  focusIndices.categories = Math.min(focusIndices.categories + 1, max);
             else if (key === 'ArrowRight') focusIndices.categories = Math.max(focusIndices.categories - 1, 0);
             else if (key === 'Enter' || key === ' ') {
                 const btn = document.getElementById(`cat-${focusIndices.categories}`);
-                if(btn) {
+                if (btn) {
                     currentCat = btn.getAttribute('data-cat');
                     focusIndices.channels = 0;
                     filterChannels();
@@ -506,38 +527,34 @@
 
         function handleChannelsNav(key) {
             const max = filteredChannels.length - 1;
-            if (max < 0) {
-                currentMode = 'CATEGORIES';
-                updateFocus();
-                return;
-            }
-            if (key === 'ArrowUp') {
-                if (focusIndices.channels === 0) currentMode = 'CATEGORIES';
-                else focusIndices.channels = Math.max(focusIndices.channels - 1, 0);
-            } else if (key === 'ArrowDown') focusIndices.channels = Math.min(focusIndices.channels + 1, max);
+            if (max < 0) { currentMode = 'CATEGORIES'; updateFocus(); return; }
+
+            if      (key === 'ArrowUp')    { if (focusIndices.channels === 0) currentMode = 'CATEGORIES'; else focusIndices.channels--; }
+            else if (key === 'ArrowDown')  focusIndices.channels = Math.min(focusIndices.channels + 1, max);
             else if (key === 'ArrowRight') focusIndices.channels = Math.max(focusIndices.channels - 5, 0);
-            else if (key === 'ArrowLeft') focusIndices.channels = Math.min(focusIndices.channels + 5, max);
+            else if (key === 'ArrowLeft')  focusIndices.channels = Math.min(focusIndices.channels + 5, max);
             else if (key === 'Enter' || key === ' ') {
                 openActionModal(filteredChannels[focusIndices.channels]);
+                return;
             }
             updateFocus();
         }
 
         function handleBackAction() {
-            if (currentMode === 'MODAL') { actionModal.classList.remove('active'); currentMode = 'CHANNELS'; updateFocus(); }
-            else if (currentMode === 'PLAYER_MENU') toggleQualityMenu();
+            if      (currentMode === 'MODAL')          { actionModal.classList.remove('active'); currentMode = 'CHANNELS'; updateFocus(); }
+            else if (currentMode === 'PLAYER_MENU')    toggleQualityMenu();
             else if (currentMode === 'PLAYER_CONTROLS' || currentMode === 'PLAYER_HIDDEN') closePlayer();
-            else if (currentMode === 'IFRAME') closeIframe();
-            else if (currentMode === 'CHANNELS') { currentMode = 'CATEGORIES'; updateFocus(); }
-            else if (currentMode === 'CATEGORIES') { currentMode = 'SEARCH'; updateFocus(); }
+            else if (currentMode === 'IFRAME')         closeIframe();
+            else if (currentMode === 'CHANNELS')       { currentMode = 'CATEGORIES'; updateFocus(); }
+            else if (currentMode === 'CATEGORIES')     { currentMode = 'SEARCH'; updateFocus(); }
         }
 
+        // ─── Iframe ───────────────────────────────────────────────────────
         function openIframe(url) {
             currentMode = 'IFRAME';
             iPlayer.src = url;
             iframeContainer.style.display = 'flex';
         }
-
         function closeIframe() {
             iPlayer.src = "about:blank";
             iframeContainer.style.display = 'none';
@@ -545,26 +562,27 @@
             updateFocus();
         }
 
+        // ─── المشغل ───────────────────────────────────────────────────────
         function openPlayer(url, type, name) {
             currentMode = 'PLAYER_CONTROLS';
             playerContainer.classList.add('active');
             playerLoader.classList.remove('hidden');
             document.getElementById('player-loading-text').innerText = `جاري تشغيل: ${name}`;
-            
+
             if (hls) { hls.destroy(); hls = null; }
             video.src = "";
-            
+
             if (Hls.isSupported() && url.includes('.m3u8')) {
-                hls = new Hls();
+                hls = new Hls({ enableWorker: true });
                 hls.loadSource(url);
                 hls.attachMedia(video);
-                hls.on(Hls.Events.MANIFEST_PARSED, function() {
+                hls.on(Hls.Events.MANIFEST_PARSED, () => {
                     playerLoader.classList.add('hidden');
                     video.play().catch(() => showStatus("اضغط OK للتشغيل"));
                     setupQualityMenu();
                     showPlayerOverlay();
                 });
-                hls.on(Hls.Events.ERROR, (e, data) => data.fatal && showStatus("خطأ في الرابط"));
+                hls.on(Hls.Events.ERROR, (e, data) => { if (data.fatal) showStatus("❌ خطأ في الرابط"); });
             } else {
                 video.src = url;
                 video.play().catch(() => showStatus("اضغط OK للتشغيل"));
@@ -575,8 +593,7 @@
 
         function closePlayer() {
             if (hls) { hls.destroy(); hls = null; }
-            video.pause();
-            video.src = "";
+            video.pause(); video.src = "";
             playerContainer.classList.remove('active');
             hidePlayerOverlay();
             currentMode = 'CHANNELS';
@@ -584,8 +601,8 @@
         }
 
         function setupQualityMenu() {
-            if(!hls) return;
-            let html = '<div class="menu-option quality-btn tv-focus" data-quality="-1">تلقائي (Auto)</div>';
+            if (!hls) return;
+            let html = '<div class="menu-option quality-btn" data-quality="-1">تلقائي (Auto)</div>';
             hls.levels.forEach((l, i) => html += `<div class="menu-option quality-btn" data-quality="${i}">${l.height}p</div>`);
             qualityMenu.innerHTML = html;
         }
@@ -593,30 +610,29 @@
         function handlePlayerNav(key) {
             if (currentMode === 'PLAYER_CONTROLS') {
                 const max = document.querySelectorAll('.player-btn').length - 1;
-                if (key === 'ArrowLeft') focusIndices.controls = Math.min(focusIndices.controls + 1, max);
+                if      (key === 'ArrowLeft')  focusIndices.controls = Math.min(focusIndices.controls + 1, max);
                 else if (key === 'ArrowRight') focusIndices.controls = Math.max(focusIndices.controls - 1, 0);
                 else if (key === 'Enter' || key === ' ') {
                     const btns = document.querySelectorAll('.player-btn');
                     executePlayerAction(btns[focusIndices.controls].id);
                 }
-            } 
-            else if (currentMode === 'PLAYER_MENU') {
+            } else if (currentMode === 'PLAYER_MENU') {
                 const opts = document.querySelectorAll('.quality-btn');
-                const max = opts.length - 1;
-                if (key === 'ArrowUp') focusIndices.menu = Math.max(focusIndices.menu - 1, 0);
+                const max  = opts.length - 1;
+                if      (key === 'ArrowUp')   focusIndices.menu = Math.max(focusIndices.menu - 1, 0);
                 else if (key === 'ArrowDown') focusIndices.menu = Math.min(focusIndices.menu + 1, max);
                 else if (key === 'Enter' || key === ' ') {
                     const qIndex = parseInt(opts[focusIndices.menu].getAttribute('data-quality'));
-                    if(hls) hls.currentLevel = qIndex;
+                    if (hls) hls.currentLevel = qIndex;
                     document.getElementById('current-quality').innerText = qIndex === -1 ? "تلقائي" : opts[focusIndices.menu].innerText;
-                    toggleQualityMenu();
+                    toggleQualityMenu(); return;
                 }
             }
             updateFocus();
         }
 
         function executePlayerAction(btnId) {
-            switch(btnId) {
+            switch (btnId) {
                 case 'btn-play':
                     if (video.paused) { video.play(); document.getElementById('play-icon').innerText = '⏸ ايقاف'; }
                     else { video.pause(); document.getElementById('play-icon').innerText = '▶️ تشغيل'; }
@@ -625,15 +641,16 @@
                     video.muted = !video.muted;
                     document.getElementById('mute-status').innerText = video.muted ? '🔇 تشغيل الصوت' : '🔊 كتم';
                     break;
-                case 'btn-quality': toggleQualityMenu(); break;
+                case 'btn-quality': toggleQualityMenu(); return;
                 case 'btn-aspect':
                     currentAspectIndex = (currentAspectIndex + 1) % aspectModes.length;
                     video.className = 'video-' + aspectModes[currentAspectIndex];
                     document.getElementById('aspect-text').innerText = aspectLabels[currentAspectIndex];
                     break;
-                case 'btn-hide': hidePlayerOverlay(); break;
-                case 'btn-exit': closePlayer(); break;
+                case 'btn-hide': hidePlayerOverlay(); return;
+                case 'btn-exit': closePlayer(); return;
             }
+            updateFocus();
         }
 
         function toggleQualityMenu() {
@@ -669,12 +686,19 @@
             window.statusTimer = setTimeout(() => statusInfo.classList.remove('show'), 3000);
         }
 
+        // ─── البحث ────────────────────────────────────────────────────────
         searchInput.addEventListener('input', (e) => {
             searchQuery = e.target.value;
             focusIndices.channels = 0;
             filterChannels();
         });
 
+        // FIX: عند الخروج من حقل البحث بالضغط على Enter، ننتقل للتصنيفات
+        searchInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') { searchInput.blur(); currentMode = 'CATEGORIES'; updateFocus(); }
+        });
+
+        // ─── تشغيل ────────────────────────────────────────────────────────
         window.onload = checkAuth;
     </script>
 </body>
