@@ -43,7 +43,7 @@ jobs:
               "iconColor": "#000000",
               "resolution": "1920x1080",
               "supportXHR": true,
-              "trustLevel": "trusted",
+              "trustLevel": "default",
               "requiredPermissions": [
                   "internet",
                   "network.state",
